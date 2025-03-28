@@ -3,26 +3,38 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
-import requests
+import gdown
 
 app = Flask(__name__)
 
+# Model details
+MODEL_PATH = "clothing_model.h5"
+GDRIVE_URL = "https://drive.google.com/uc?id=1GV22U9uaXsKN8WGvzTosuqEBr02XMtzV"
+
+# Ensure model is downloaded and exists
+def download_model():
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1024:
+        print("Downloading model from Google Drive...")
+        gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
+        print("Model downloaded successfully.")
+
+download_model()
+
 # Load the trained model
-model_path = "clothing_model.h5"
-if not os.path.exists(model_path):
-    print("Model file not found locally. Downloading from Google Drive...")
-    url = "https://drive.google.com/uc?id=1GV22U9uaXsKN8WGvzTosuqEBr02XMtzV"
-    response = requests.get(url)
-    with open(model_path, "wb") as f:
-        f.write(response.content)
-    print("Model downloaded successfully.")
+try:
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print("Model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
+    exit(1)
 
-model = tf.keras.models.load_model(model_path)
-class_names = ['pants', 'shirt', 'shoes', 'shorts', 'sneakers', 't-shirt']  # Same as in training
+# Define class labels
+class_names = ['pants', 'shirt', 'shoes', 'shorts', 'sneakers', 't-shirt']
 
+# Image preprocessing function
 def preprocess_image(image):
-    image = image.resize((224, 224))  # Resize to match model input
-    image = np.array(image) / 255.0  # Normalize pixel values
+    image = image.resize((224, 224))  # Resize for model input
+    image = np.array(image) / 255.0   # Normalize
     image = np.expand_dims(image, axis=0)  # Add batch dimension
     return image
 
@@ -44,11 +56,14 @@ def predict():
         processed_image = preprocess_image(image)
         predictions = model.predict(processed_image)
         confidence = np.max(predictions)
+
         if confidence < 0.9:  # Confidence threshold
             predicted_class = "unknown type of cloth"
         else:
             predicted_class = class_names[np.argmax(predictions)] if np.argmax(predictions) < len(class_names) else "unknown type of cloth"
+
         return jsonify({'class': predicted_class, 'confidence': float(confidence)})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
