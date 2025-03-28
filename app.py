@@ -2,11 +2,22 @@ from flask import Flask, request, render_template, jsonify
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import os
+import requests
 
 app = Flask(__name__)
 
 # Load the trained model
-model = tf.keras.models.load_model("clothing_model.h5")
+model_path = "clothing_model.h5"
+if not os.path.exists(model_path):
+    print("Model file not found locally. Downloading from Google Drive...")
+    url = "https://drive.google.com/uc?id=1GV22U9uaXsKN8WGvzTosuqEBr02XMtzV"
+    response = requests.get(url)
+    with open(model_path, "wb") as f:
+        f.write(response.content)
+    print("Model downloaded successfully.")
+
+model = tf.keras.models.load_model(model_path)
 class_names = ['pants', 'shirt', 'shoes', 'shorts', 'sneakers', 't-shirt']  # Same as in training
 
 def preprocess_image(image):
@@ -42,4 +53,4 @@ def predict():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
