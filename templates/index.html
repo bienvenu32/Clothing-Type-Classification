@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clothing Type Classification</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 20px;
+        background-color: #f4f4f9;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #4caf50;
+      }
+      input[type="file"] {
+        margin: 20px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .result {
+        margin-top: 20px;
+        font-size: 1.2em;
+      }
+      .uploaded-image {
+        margin-top: 20px;
+        max-width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+      }
+      .description {
+        margin-bottom: 20px;
+        font-size: 1em;
+        line-height: 1.5;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Clothing Type Classification</h1>
+      <div class="description">
+        <p>
+          This project aims to classify clothing types using Deep learning with
+          CNN. Upload an image of clothing, and the system will predict the type
+          of clothing along with the confidence level.
+        </p>
+        <p>
+          How it works: The uploaded image is processed by a trained model,
+          which analyzes the image and returns the predicted class and
+          confidence score.
+        </p>
+      </div>
+      <form id="uploadForm">
+        <input type="file" id="fileInput" accept="image/*" required />
+        <button type="submit">Predict</button>
+      </form>
+      <img id="uploadedImage" class="uploaded-image" style="display: none" />
+      <div class="result" id="result"></div>
+    </div>
+    <script>
+      const form = document.getElementById("uploadForm");
+      const resultDiv = document.getElementById("result");
+      const uploadedImage = document.getElementById("uploadedImage");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (!file) {
+          resultDiv.textContent = "Please select an image.";
+          return;
+        }
+
+        // Display the uploaded image
+        const reader = new FileReader();
+        reader.onload = () => {
+          uploadedImage.src = reader.result;
+          uploadedImage.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("/predict", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          if (response.ok) {
+            resultDiv.innerHTML = `Predicted Class: <b>${
+              data.class
+            }</b><br>Confidence: <b>${(data.confidence * 100).toFixed(2)}%</b>`;
+          } else {
+            resultDiv.textContent = `Error: ${data.error}`;
+          }
+        } catch (error) {
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      });
+    </script>
+  </body>
+</html>
