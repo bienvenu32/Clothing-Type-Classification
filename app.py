@@ -8,8 +8,8 @@ import gdown
 app = Flask(__name__)
 
 # Model details
-MODEL_PATH = "clothing_model.h5"
-GDRIVE_URL = "https://drive.google.com/uc?id=1GV22U9uaXsKN8WGvzTosuqEBr02XMtzV"
+MODEL_PATH = "clothing_model_converted.h5"
+GDRIVE_URL = "https://drive.google.com/file/d/124c2uxs3dzBTjqzSLuPk71eyrqofhoc9/view?usp=sharing"
 
 # Ensure model is downloaded and exists
 def download_model():
